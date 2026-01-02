@@ -1,104 +1,97 @@
-# 🚀 FastAPI Message Manager
+# 🌌 X-PRIVE API | FastAPI Backend
 
-Este projeto é uma API simples e funcional desenvolvida com **FastAPI** para gerenciar mensagens, utilizando o **PostgreSQL** como banco de dados relacional.
-
-A aplicação permite realizar as operações básicas de CRUD (Criar, Listar e Deletar) de forma rápida e segura.
+A **X-PRIVE API** é uma API de alta performance que sustenta o ecossistema X-PRIVE, responsável pela persistência de dados no **PostgreSQL** e pelo gerenciamento dos portais de atalho.
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
+## 🛠️ Requisitos
 
-* **Python 3.11+**
-* **FastAPI**: Framework moderno de alta performance.
-* **PostgreSQL**: Banco de dados relacional.
-* **Psycopg2-binary**: Adaptador de banco de dados para Python.
-* **python-dotenv**: Gestão de variáveis de ambiente (.env).
-* **Pydantic**: Validação de dados e esquemas.
-* **CORS Middleware**: Configuração de segurança para requisições externas.
+Para rodar a API, você precisará de:
+
+* Python 3.9 ou superior
+* PostgreSQL (local ou remoto, como Supabase ou Render)
+* Pip (gerenciador de pacotes do Python)
 
 ---
 
-## ⚙️ Instalação e Setup
+## 📦 Instalação
 
-### 1. Clonar o Repositório
+1. Clone o repositório e entre na pasta da API:
 
 ```bash
 git clone <seu-repositorio>
-cd <nome-do-projeto>
+cd x-prive-api
 ```
 
-### 2. Criar Ambiente Virtual
+2. Instale as dependências necessárias:
 
 ```bash
-# Criar o ambiente
-python -m venv venv
-
-# Ativar (Windows)
-venv\Scripts\activate
-
-# Ativar (Linux/Mac)
-source venv/bin/activate
+pip install fastapi uvicorn psycopg2-binary python-dotenv
 ```
 
-### 3. Instalar Dependências
-
-```bash
-pip install fastapi uvicorn psycopg2-binary python-dotenv pydantic
-```
-
-### 4. Configuração do Banco de Dados
-
-No seu PostgreSQL, crie o banco de dados:
-
-```sql
-CREATE DATABASE meu_projeto;
-```
-
-Crie um arquivo chamado `.env` na raiz do projeto e configure a URL de conexão:
+3. Configure as variáveis de ambiente criando um arquivo `.env` na raiz do projeto:
 
 ```
-DATABASE_URL=postgresql://usuario:senha@localhost:5432/meu_projeto
+DATABASE_URL=postgres://usuario:senha@localhost:5432/nome_do_banco
 ```
 
-> Substitua `usuario` e `senha` pelas suas credenciais reais do Postgres.
+> Substitua `usuario`, `senha` e `nome_do_banco` pelos dados do seu PostgreSQL.
 
-### 5. Executar a Aplicação
+---
 
-Para rodar a aplicação em modo de desenvolvimento:
+## 🚀 Executando o Servidor
+
+Inicie a API usando Uvicorn com hot reload ativo:
 
 ```bash
 uvicorn main:app --reload
 ```
 
-Acesse em: [http://127.0.0.1:8000](http://127.0.0.1:8000)
-
-### 6. Documentação Automática
-
-O FastAPI fornece interfaces visuais para testar a API sem precisar de ferramentas externas:
-
-* Swagger UI: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-* Redoc: [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
+A API estará disponível em: [http://localhost:8000](http://localhost:8000)
 
 ---
 
-## 🛣️ Endpoints da API
+## 📑 Documentação Automática
 
-| Método | Endpoint        | Descrição                               |
-| ------ | --------------- | --------------------------------------- |
-| GET    | /mensagens      | Lista todas as mensagens do banco.      |
-| POST   | /mensagens      | Cadastra uma nova mensagem.             |
-| DELETE | /mensagens/{id} | Remove uma mensagem específica pelo ID. |
+O FastAPI gera documentação interativa automaticamente:
+
+* **Swagger UI:** [http://localhost:8000/docs](http://localhost:8000/docs)
+* **Redoc:** [http://localhost:8000/redoc](http://localhost:8000/redoc)
+
+---
+
+## 🛣️ Endpoints Disponíveis
+
+| Método | Endpoint    | Descrição                                  |
+| ------ | ----------- | ------------------------------------------ |
+| GET    | /sites      | Lista todos os atalhos salvos no banco.    |
+| POST   | /sites      | Adiciona um novo portal (JSON: name e url) |
+| DELETE | /sites/{id} | Remove um portal permanentemente pelo ID   |
 
 ### Exemplo de JSON para POST
 
 ```json
 {
-  "conteudo": "Minha primeira mensagem!"
+  "name": "Site Exemplo",
+  "url": "https://exemplo.com"
 }
 ```
 
 ---
 
-## 📝 Notas
+## 🗄️ Estrutura do Banco de Dados
 
-* Certifique-se de
+A tabela `sites` é criada automaticamente no startup da API:
+
+| Campo | Tipo   | Descrição            |
+| ----- | ------ | -------------------- |
+| id    | SERIAL | Chave primária       |
+| name  | TEXT   | Nome do site         |
+| url   | TEXT   | URL completa do site |
+
+---
+
+## ⚠️ Observações de Segurança
+
+* Configure o CORS no `main.py` para permitir apenas o domínio do front-end em produção.
+* Mantenha o arquivo `.env` seguro e **nunca versionado** no Git.
