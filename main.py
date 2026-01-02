@@ -4,16 +4,19 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import List
 
 load_dotenv()
-DB_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-app = FastAPI(title="X-PRIVE API", description="API para gerenciamento de sites/atalhos")
+app = FastAPI()
 
-# CORS confiável
+# --- CONFIGURAÇÃO DE CORS ---
+# O allow_credentials=True é importante se você usar cookies ou auth
+# O allow_origins=["*"] libera para qualquer origem
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Pode restringir para seu front-end real
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -25,9 +28,10 @@ class SiteSchema(BaseModel):
 
 def get_connection():
     try:
-        return psycopg2.connect(DB_URL)
+        return psycopg2.connect(DATABASE_URL)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao conectar no banco: {e}")
+        print(f"Erro ao conectar no banco: {e}")
+        raise HTTPException(status_code=500, detail="Erro de conexão com o banco")
 
 @app.on_event("startup")
 def setup_db():
@@ -35,8 +39,8 @@ def setup_db():
     cur = conn.cursor()
     cur.execute("""
         CREATE TABLE IF NOT EXISTS sites (
-            id SERIAL PRIMARY KEY,
-            name TEXT NOT NULL,
+            id SERIAL PRIMARY KEY, 
+            name TEXT NOT NULL, 
             url TEXT NOT NULL
         );
     """)
@@ -55,7 +59,7 @@ def get_sites():
         conn.close()
         return [{"id": s[0], "name": s[1], "url": s[2]} for s in dados]
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao buscar sites: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/sites")
 def post_site(site: SiteSchema):
@@ -63,7 +67,7 @@ def post_site(site: SiteSchema):
         conn = get_connection()
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO sites (name, url) VALUES (%s, %s) RETURNING id, name, url;",
+            "INSERT INTO sites (name, url) VALUES (%s, %s) RETURNING id, name, url;", 
             (site.name, site.url)
         )
         novo_site = cur.fetchone()
@@ -72,7 +76,7 @@ def post_site(site: SiteSchema):
         conn.close()
         return {"id": novo_site[0], "name": novo_site[1], "url": novo_site[2]}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao adicionar site: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/sites/{id_site}")
 def delete_site(id_site: int):
@@ -80,13 +84,15 @@ def delete_site(id_site: int):
         conn = get_connection()
         cur = conn.cursor()
         cur.execute("DELETE FROM sites WHERE id = %s RETURNING id;", (id_site,))
-        deleted = cur.fetchone()
+        deleted_id = cur.fetchone()
         conn.commit()
         cur.close()
         conn.close()
-        if deleted:
-            return {"status": "removido", "id": deleted[0]}
-        else:
+        
+        if not deleted_id:
             raise HTTPException(status_code=404, detail="Site não encontrado")
+            
+        return {"status": "removido", "id": id_site}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao deletar site: {e}")
+        if isinstance(e, HTTPException): raise e
+        raise HTTPException(status_code=500, detail=str(e))
